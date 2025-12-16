@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+sqlalchemy # データベース接続用
+psycopg2-binary # PostgreSQLドライバ
+pydantic # データ検証用
+
