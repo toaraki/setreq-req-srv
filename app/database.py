@@ -4,12 +4,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-# compose.yamlで設定した環境変数からDB接続URLを取得
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    # フォールバックとして、compose.yamlに書いたURLを使用
-    "postgresql://djuser:djpassword@db:5432/djdb" 
-)
+# 必須の環境変数として取得。設定されていない場合は None になる
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    # ローカル開発で環境変数を忘れている場合に気づけるようにする
+    # print("Warning: DATABASE_URL is not set.")
+    raise RuntimeError("DATABASE_URL must be set")
+
 
 # SQLAlchemyエンジンを作成
 engine = create_engine(DATABASE_URL)

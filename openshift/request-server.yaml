@@ -1,0 +1,65 @@
+# 1. サービス定義 (フロントエンドや他のサービスからのアクセス用)
+apiVersion: v1
+kind: Service
+metadata:
+  name: request-service
+  labels:
+    app: request-service
+spec:
+  selector:
+    app: request-service
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+---
+# 2. デプロイメント定義
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: request-service
+  labels:
+    app: request-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: request-service
+  template:
+    metadata:
+      labels:
+        app: request-service
+    spec:
+      containers:
+      - name: request-service
+        # イメージ名はBuildConfigによる内部レジストリの名前を指定
+        image: request-service:latest 
+        ports:
+        - containerPort: 8000
+        env:
+        # --- Secretから個別に値を環境変数として取得 ---
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: dj-db
+              key: database-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dj-db
+              key: database-password
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: dj-db
+              key: database-name
+        
+        # --- 取得した値を使って DATABASE_URL を動的に組み立てる ---
+        # ホスト名はDBのサービス名である 'db' を指定
+        - name: DATABASE_URL
+          value: "postgresql://$(DB_USER):$(DB_PASSWORD)@db:5432/$(DB_NAME)"
+          
+        # ログ出力などを確実にするための設定 (FastAPI/Python用)
+        - name: PYTHONUNBUFFERED
+          value: "1"
